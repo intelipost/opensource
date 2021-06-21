@@ -222,7 +222,6 @@
 
 	</build>
 
-
 	<repositories>
 		<repository>
 			<id>confluent</id>
