@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "ResetOffsetToTimestamp",
+  "namespace": "br.com.intelipost.kafka.model",
+  "fields": [
+    {
+      "name": "consumerId",
+      "type": "string"
+    },
+    {
+	  "name": "timestamp",
+	  "type": {
+	    "type": "long",
+	    "logicalType": "timestamp-millis"
+	  }
+	}
+  ]
+}
