@@ -224,16 +224,16 @@
 
 	<repositories>
 		<repository>
-			<id>nexus</id>
-			<url>http://nexus.intelipost.com.br/repository/ip-libs/</url>
+			<id>confluent</id>
+			<url>https://packages.confluent.io/maven/</url>
 		</repository>
 	</repositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>nexus</id>
+	<distributionManagement>
+		<repository>
+			<id>mvn-intelipost-releases</id>
 			<url>http://nexus.intelipost.com.br/repository/ip-libs/</url>
-		</pluginRepository>
-	</pluginRepositories>
+		</repository>
+	</distributionManagement>
 
 </project>

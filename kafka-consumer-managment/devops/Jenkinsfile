@@ -1,0 +1,52 @@
+pipeline {
+    agent { node { label 'linux && jdk11' } }
+
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws_access_key_id_k8s')
+        AWS_SECRET_ACCESS_KEY = credentials('aws_secret_access_key_k8s')
+        AWS_DEFAULT_REGION = credentials('aws_default_region')
+        AWS_DEFAULT_REGION_PRD = credentials('aws_default_region_prd')
+        DOCKER_REPOSITORY = credentials('aws_docker_repository ')
+        KUBECONFIG_QA = credentials('aws_kubernetes_config_qa')
+        KUBECONFIG_PRD = credentials('aws_kubernetes_config_prd')
+        SONAR_USER = credentials('sonar-admin-user')
+        SONAR_URL = credentials('sonar-url')
+        NEXUS_BASE_URL = credentials('nexus_base_url')
+        NEXUS_USER = credentials('nexus_user')
+        NEXUS_PASS = credentials('nexus_pass')
+    }
+
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    stages {
+
+        stage('intelipost-devops-tools') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'RelativeTargetDirectory',
+                    relativeTargetDir: 'intelipost-devops']],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: 'devops-intelipost', url: 'https://github.com/intelipost/intelipost-devops.git']]
+                ])
+            }
+        }
+        
+        stage('Build Application') {
+            steps {
+                sh 'bash -x intelipost-devops/pipeline-shared-librares/build-package.sh'
+            }
+        }
+
+        stage('Upload Artifact') {
+            steps {
+                sh 'bash -x intelipost-devops/pipeline-shared-librares/nexus-upload.sh'
+            }
+        }
+        
+    }
+}
