@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "RequestResumeConsumer",
+  "namespace": "br.com.intelipost.kafka.model",
+  "fields": [
+    {
+      "name": "consumerId",
+      "type": "string"
+    }
+  ]
+}

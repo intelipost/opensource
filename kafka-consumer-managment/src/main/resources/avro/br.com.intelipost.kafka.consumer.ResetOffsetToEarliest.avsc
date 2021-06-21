@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "ResetOffsetToEarliest",
+  "namespace": "br.com.intelipost.kafka.model",
+  "fields": [
+    {
+      "name": "consumerId",
+      "type": "string"
+    }
+  ]
+}
