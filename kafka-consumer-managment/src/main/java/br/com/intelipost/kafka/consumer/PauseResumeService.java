@@ -11,6 +11,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.event.ConsumerPausedEvent;
+import org.springframework.kafka.event.ConsumerStoppedEvent;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import br.com.intelipost.kafka.model.ConsumerIdentifier;
 import br.com.intelipost.kafka.model.ManualPauseRequested;
 import br.com.intelipost.kafka.model.ManualResumeRequested;
+import br.com.intelipost.kafka.model.ManualStopRequested;
 import br.com.intelipost.kafka.model.ProblemConsumingEvent;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,6 +37,7 @@ public class PauseResumeService {
 
 	private Map<String, AtomicInteger> gaugesState = new HashMap<>();
 	private Map<String, ManualPauseRequested> manualControl = new HashMap<>();
+	private Map<String, ManualStopRequested> stoppedManualControl = new HashMap<>();
 
 	@Scheduled(fixedDelay = 120000, initialDelay = 60000)
 	public void autoStartScheduler() {
@@ -104,11 +107,31 @@ public class PauseResumeService {
 	}
 
 	@EventListener
+	public void consumerStopedEvent(ConsumerStoppedEvent event) {
+		log.warn(event.toString());
+	}
+	
+	@EventListener
+	public void manualStopRequested(ManualStopRequested event) {
+		MessageListenerContainer container = registry.getListenerContainer(event.getId());
+		if (container != null) {
+			container.stop();
+			stoppedManualControl.put(event.getId(), event);
+			log.info(event.toString());
+		}
+	}
+	
+	@EventListener
 	public void manualResumeRequested(ManualResumeRequested event) {
 		MessageListenerContainer container = registry.getListenerContainer(event.getId());
 		if (container != null) {
 			container.resume();
-			manualControl.remove(event.getId());
+			
+			if (manualControl.containsKey(event.getId()))
+				manualControl.remove(event.getId());
+			else
+				stoppedManualControl.remove(event.getId());
+			
 			log.info(event.toString());
 		}
 	}

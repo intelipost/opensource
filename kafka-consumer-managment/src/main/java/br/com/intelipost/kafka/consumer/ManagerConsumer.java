@@ -13,6 +13,7 @@ import br.com.intelipost.kafka.model.ManualPauseRequested;
 import br.com.intelipost.kafka.model.ManualResumeRequested;
 import br.com.intelipost.kafka.model.RequestPauseConsumer;
 import br.com.intelipost.kafka.model.RequestResumeConsumer;
+import br.com.intelipost.kafka.model.RequestStopConsumer;
 import br.com.intelipost.kafka.model.ResetOffsetToEarliest;
 import br.com.intelipost.kafka.model.ResetOffsetToTimestamp;
 import br.com.intelipost.kafka.model.SeekToBeginning;
@@ -40,6 +41,9 @@ public class ManagerConsumer {
 			applicationEventPublisher.publishEvent(new ManualPauseRequested(cmd.getConsumerId()));
 		} else if(record.value() instanceof RequestResumeConsumer) {
 			RequestResumeConsumer cmd = (RequestResumeConsumer) record.value();
+			applicationEventPublisher.publishEvent(new ManualResumeRequested(cmd.getConsumerId()));
+		} else if (record.value() instanceof RequestStopConsumer){
+			RequestStopConsumer cmd = (RequestStopConsumer) record.value();
 			applicationEventPublisher.publishEvent(new ManualResumeRequested(cmd.getConsumerId()));
 		} else {
 			log.warn("Unknown type {}", record.value().getSchema().getName());

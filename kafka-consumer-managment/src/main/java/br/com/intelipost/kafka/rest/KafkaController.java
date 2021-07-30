@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.intelipost.kafka.model.RequestPauseConsumer;
 import br.com.intelipost.kafka.model.RequestResumeConsumer;
+import br.com.intelipost.kafka.model.RequestStopConsumer;
 import br.com.intelipost.kafka.rest.body.PauseRequestBody;
 import br.com.intelipost.kafka.rest.body.PauseResponseBody;
 import br.com.intelipost.kafka.rest.body.ResumeRequestBody;
 import br.com.intelipost.kafka.rest.body.ResumeResponseBody;
+import br.com.intelipost.kafka.rest.body.StopResponseBody;
 
 @RestController
 public class KafkaController {
@@ -30,6 +32,10 @@ public class KafkaController {
 	private static final String NOT_FOUND = "NOT_FOUND";
 	private static final String PAUSED = "PAUSED";
 	private static final String CONSUMERS_CONTROLLER_TOPIC = "consumers.controller";
+	
+	private static final String STOPPED = "STOPPED";
+	private static final String STOP_REQUESTED = "STOP_REQUESTED";
+	
 	
 	@Autowired KafkaListenerEndpointRegistry registry;
 	@Autowired KafkaTemplate<Object, Object> kafkaTemplate;
@@ -63,6 +69,29 @@ public class KafkaController {
 						.setConsumerId(pause.getId()) //
 						.build());
 				responses.add(new PauseResponseBody(pause.getId(), PAUSE_REQUESTED));
+			}
+		}
+		return ResponseEntity.ok(responses);
+	}
+	
+	@PostMapping(value = "/kafka/stop", produces = "application/json")
+	public ResponseEntity<List<StopResponseBody>> stop(@RequestBody List<StopResponseBody> body){
+		if(body == null)
+			return ResponseEntity.badRequest().build();
+		List<StopResponseBody> responses = new ArrayList<>(body.size());
+		for (StopResponseBody stop : body) {
+			MessageListenerContainer container = registry.getListenerContainer(stop.getId());
+			if(container == null) {
+				responses.add(new StopResponseBody(stop.getId(), NOT_FOUND));
+				continue;
+			};
+			if(!container.isRunning())
+				responses.add(new StopResponseBody(stop.getId(), STOPPED));
+			else {
+				kafkaTemplate.send(CONSUMERS_CONTROLLER_TOPIC, RequestStopConsumer.newBuilder()//
+						.setConsumerId(stop.getId()) //
+						.build());
+				responses.add(new StopResponseBody(stop.getId(), STOP_REQUESTED));
 			}
 		}
 		return ResponseEntity.ok(responses);
