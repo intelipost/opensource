@@ -1,22 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>kafka-consumer-managment</artifactId>
-	<name>kafka-consumer-managment</name>
-	<packaging>jar</packaging>
-	<description>Disponibiliza api para controlar os consumers do kafka
-    </description>
 	<groupId>br.com.intelipost.opensource</groupId>
+	<artifactId>kafka-consumer-managment</artifactId>
+	<packaging>jar</packaging>
 	<version>1.0.0</version>
+	<name>kafka-consumer-managment</name>
+	<description>Disponibiliza api para controlar os consumers do kafka</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.5</version>
-		<relativePath />
+		<version>2.5.3</version>
 	</parent>
-
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,6 +51,7 @@
 	</dependencyManagement>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-avro</artifactId>
@@ -81,6 +80,21 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
@@ -96,14 +110,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>redis.clients</groupId>
-			<artifactId>jedis</artifactId>
-			<type>jar</type>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-redis</artifactId>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
 		</dependency>
 
 		<!-- Micrometer -->
@@ -111,10 +119,9 @@
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-core</artifactId>
 		</dependency>
-		<!-- Micrometer Prometheus registry -->
 		<dependency>
 			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-registry-prometheus</artifactId>
+			<artifactId>micrometer-registry-elastic</artifactId>
 		</dependency>
 
 		<!-- avro dependencies -->
@@ -190,6 +197,10 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.avro</groupId>
 				<artifactId>avro-maven-plugin</artifactId>
 				<version>${avro.version}</version>
@@ -208,6 +219,10 @@
 						</goals>
 						<configuration>
 							<imports>
+								<import>${project.basedir}/src/main/resources/avro/br.com.intelipost.kafka.consumer.RequestPauseConsumer.avsc</import>
+								<import>${project.basedir}/src/main/resources/avro/br.com.intelipost.kafka.consumer.RequestResumeConsumer.avsc</import>
+								<import>${project.basedir}/src/main/resources/avro/br.com.intelipost.kafka.consumer.ResetOffsetToEarliest.avsc</import>
+								<import>${project.basedir}/src/main/resources/avro/br.com.intelipost.kafka.consumer.ResetOffsetToTimestamp.avsc</import>
 							</imports>
 							<includes>
 								<include>**/*.avsc</include>
@@ -220,6 +235,13 @@
 			</plugin>
 		</plugins>
 
+		<extensions>
+			<extension>
+				<groupId>org.kuali.maven.wagons</groupId>
+				<artifactId>maven-s3-wagon</artifactId>
+				<version>1.2.1</version>
+			</extension>
+		</extensions>
 	</build>
 
 	<repositories>

@@ -1,0 +1,67 @@
+spring:
+  jmx.enabled: true
+  application:
+    name: trackables-shipment-order-discovery
+  config.import: "configserver:http://config.intelipost.com.br"
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  redis:
+    servers: redis-queues.ifinfo.0001.sae1.cache.amazonaws.com
+  datasource:
+     url: jdbc:postgresql://${DATASOURCE_URL}:5432/esprinter
+     username: ${DATASOURCE_USERNAME}
+     password: ${DATASOURCE_PASSWORD}
+  kafka:
+    listeners:
+      max:
+        erros: 5
+    properties:
+      bootstrap:
+        servers: ${KAFKA_BROKERS_1},${KAFKA_BROKERS_2},${KAFKA_BROKERS_3}
+      sasl:
+        mechanism: ${KAFKA_SASL_MECHANISM}
+        jaas:
+          config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_JAAS_CONFIG_USERNAME}" password="${KAFKA_JAAS_CONFIG_PASSWORD}";
+      security:
+        protocol: ${KAFKA_SECURITY_PROTOCOL}
+      auto:
+        register:
+          schemas: true
+      schema:
+        registry:
+          url: ${SCHEMA_REGISTRY_URL}
+  notification:
+    slack: ${SLACK_CHANNEL_URL}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${WEB_EXPOSURE_INCLUDE}
+    metrics:
+      enabled: true
+tracking:
+   strategy: ${TRACKING_STRATEGY:rest}
+   trackable:
+      shipment.order.discovery.concurrency: ${TRACKING_SHIPMENT_ORDER_DISCOVERY_CONCURRENCY:10}
+      volumes.correios.v1.concurrency: ${TRACKING_CORREIOS_CONCURRENCY:10}
+feign:
+  client:
+    config:
+      trackingClient:
+        connectTimeout: 10000
+        readTimeout: 2000
+tracking-webservice.service.host: ${TRACKING_WEBSERVICE_HOST:localhost:8080}
+
+
+management.metrics.export.elastic.host: https://shipment-order-prd.es.sa-east-1.aws.found.io:9243
+management.metrics.export.elastic.userName: elastic
+management.metrics.export.elastic.password: g7Dw5ZyrJ62c5vgizWdpprZe
+management.metrics.export.elastic.step: PT30S
+management.metrics.export.elastic.enabled: true
+
+management.metrics.enable.tomcat: false
+management.metrics.enable.jvm: false
+management.metrics.enable.system: false
+management.metrics.enable.jdbc: false
+management.metrics.enable.process: false
+management.metrics.enable.logback: false
