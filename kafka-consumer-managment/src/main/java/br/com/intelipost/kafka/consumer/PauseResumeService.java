@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import br.com.intelipost.kafka.model.ConsumerIdentifier;
 import br.com.intelipost.kafka.model.ManualPauseRequested;
 import br.com.intelipost.kafka.model.ManualResumeRequested;
+import br.com.intelipost.kafka.model.ManualStartRequested;
 import br.com.intelipost.kafka.model.ManualStopRequested;
 import br.com.intelipost.kafka.model.ProblemConsumingEvent;
 import io.micrometer.core.instrument.Gauge;
@@ -127,11 +128,18 @@ public class PauseResumeService {
 		if (container != null) {
 			container.resume();
 			
-			if (manualControl.containsKey(event.getId()))
-				manualControl.remove(event.getId());
-			else
-				stoppedManualControl.remove(event.getId());
-			
+			manualControl.remove(event.getId());
+			log.info(event.toString());
+		}
+	}
+	
+	@EventListener
+	public void manualStartRequested(ManualStartRequested event) {
+		MessageListenerContainer container = registry.getListenerContainer(event.getId());
+		if (container != null) {
+			container.start();
+
+			stoppedManualControl.remove(event.getId());
 			log.info(event.toString());
 		}
 	}

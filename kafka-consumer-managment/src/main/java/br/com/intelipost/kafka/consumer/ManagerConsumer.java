@@ -11,8 +11,11 @@ import org.springframework.stereotype.Component;
 
 import br.com.intelipost.kafka.model.ManualPauseRequested;
 import br.com.intelipost.kafka.model.ManualResumeRequested;
+import br.com.intelipost.kafka.model.ManualStartRequested;
+import br.com.intelipost.kafka.model.ManualStopRequested;
 import br.com.intelipost.kafka.model.RequestPauseConsumer;
 import br.com.intelipost.kafka.model.RequestResumeConsumer;
+import br.com.intelipost.kafka.model.RequestStartConsumer;
 import br.com.intelipost.kafka.model.RequestStopConsumer;
 import br.com.intelipost.kafka.model.ResetOffsetToEarliest;
 import br.com.intelipost.kafka.model.ResetOffsetToTimestamp;
@@ -44,7 +47,10 @@ public class ManagerConsumer {
 			applicationEventPublisher.publishEvent(new ManualResumeRequested(cmd.getConsumerId()));
 		} else if (record.value() instanceof RequestStopConsumer){
 			RequestStopConsumer cmd = (RequestStopConsumer) record.value();
-			applicationEventPublisher.publishEvent(new ManualResumeRequested(cmd.getConsumerId()));
+			applicationEventPublisher.publishEvent(new ManualStopRequested(cmd.getConsumerId()));
+		} else if (record.value() instanceof RequestStartConsumer){
+			RequestStartConsumer cmd = (RequestStartConsumer) record.value();
+			applicationEventPublisher.publishEvent(new ManualStartRequested(cmd.getConsumerId()));
 		} else {
 			log.warn("Unknown type {}", record.value().getSchema().getName());
 		}

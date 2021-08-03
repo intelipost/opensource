@@ -2,7 +2,9 @@ package br.com.intelipost.kafka.rest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +17,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.intelipost.kafka.consumer.LagAnalyzerService;
 import br.com.intelipost.kafka.model.RequestPauseConsumer;
 import br.com.intelipost.kafka.model.RequestResumeConsumer;
+import br.com.intelipost.kafka.model.RequestStartConsumer;
 import br.com.intelipost.kafka.model.RequestStopConsumer;
+import br.com.intelipost.kafka.rest.body.LaginRequestBody;
+import br.com.intelipost.kafka.rest.body.LaginResponseBody;
 import br.com.intelipost.kafka.rest.body.PauseRequestBody;
 import br.com.intelipost.kafka.rest.body.PauseResponseBody;
 import br.com.intelipost.kafka.rest.body.ResumeRequestBody;
 import br.com.intelipost.kafka.rest.body.ResumeResponseBody;
+import br.com.intelipost.kafka.rest.body.StartRequestBody;
+import br.com.intelipost.kafka.rest.body.StartResponseBody;
 import br.com.intelipost.kafka.rest.body.StopResponseBody;
 
 @RestController
@@ -29,6 +37,7 @@ public class KafkaController {
 
 	private static final String RESUME_REQUESTED = "RESUME_REQUESTED";
 	private static final String PAUSE_REQUESTED = "PAUSE_REQUESTED";
+	private static final String START_REQUESTED = "START_REQUESTED";
 	private static final String NOT_FOUND = "NOT_FOUND";
 	private static final String PAUSED = "PAUSED";
 	private static final String CONSUMERS_CONTROLLER_TOPIC = "consumers.controller";
@@ -39,6 +48,7 @@ public class KafkaController {
 	
 	@Autowired KafkaListenerEndpointRegistry registry;
 	@Autowired KafkaTemplate<Object, Object> kafkaTemplate;
+	@Autowired LagAnalyzerService lagAnalyzerService;
 	
 	@GetMapping(value = "/kafka/consumers", produces = "application/json")
 	public ResponseEntity<List<String>> consumers(){
@@ -93,6 +103,49 @@ public class KafkaController {
 						.build());
 				responses.add(new StopResponseBody(stop.getId(), STOP_REQUESTED));
 			}
+		}
+		return ResponseEntity.ok(responses);
+	}
+	
+	@PostMapping(value = "/kafka/start", produces = "application/json")
+	public ResponseEntity<List<StartResponseBody>> start(@RequestBody List<StartRequestBody> body){
+		if(body == null)
+			return ResponseEntity.badRequest().build();
+		List<StartResponseBody> responses = new ArrayList<>(body.size());
+		
+		for (StartRequestBody start : body) {
+			MessageListenerContainer container = registry.getListenerContainer(start.getId());
+			if(container == null) {
+				responses.add(new StartResponseBody(start.getId(), NOT_FOUND));
+				continue;
+			}
+			if(!container.isRunning()) {
+				kafkaTemplate.send(CONSUMERS_CONTROLLER_TOPIC, RequestStartConsumer.newBuilder()//
+						.setConsumerId(container.getListenerId()) //
+						.build());
+				
+				responses.add(new StartResponseBody(container.getListenerId(), START_REQUESTED));
+			} else {
+				responses.add(new StartResponseBody(container.getListenerId(), "STARTED"));
+			}
+		}
+		return ResponseEntity.ok(responses);
+	}
+	
+	@PostMapping(value="kafka/consumer-lag", produces="application/json")
+	public ResponseEntity<List<LaginResponseBody>> lagin(@RequestBody List<LaginRequestBody> body) throws InterruptedException, ExecutionException{
+		if(body == null)
+			return ResponseEntity.badRequest().build();
+		List<LaginResponseBody> responses = new ArrayList<>(body.size());
+		
+		for (LaginRequestBody lagin : body) {
+			MessageListenerContainer container = registry.getListenerContainer(lagin.getId());
+			if(container == null) {
+				responses.add(new LaginResponseBody(lagin.getId(), new HashMap<>()));
+				continue;
+			}
+			
+			responses.add(new LaginResponseBody(lagin.getId(), lagAnalyzerService.analyzeLag(lagin.getId())));
 		}
 		return ResponseEntity.ok(responses);
 	}
