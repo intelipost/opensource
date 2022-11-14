@@ -25,7 +25,7 @@ public class ManagerConsumer {
 
 	@Autowired ApplicationEventPublisher applicationEventPublisher;
 	
-	@KafkaListener(id = "${spring.application.name}-${spring.cloud.client.hostname}", 
+	@KafkaListener(id = "${spring.application.name}-${info.profile.active}",
 			topics = "${kafka.managment.topic.name:consumers.controller}", 
 			concurrency = "${kafka.managment.topic.concurrency:1}")
 	public void avroConsumer(ConsumerRecord<SpecificRecord, SpecificRecord> record) throws IOException {
